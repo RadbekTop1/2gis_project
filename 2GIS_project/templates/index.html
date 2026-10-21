@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2GIS Recommend — Поиск заведений по отзывам</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header class="hero">
+        <div class="nav">
+    <a href="/" class="logo-container">
+        <!-- Графический значок логотипа в стиле интерфейса -->
+        <div class="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
+            </svg>
+        </div>
+        <div class="logo-text">
+            <span class="logo-title">2GIS</span>
+            <span class="logo-subtitle">REVIEWS AI</span>
+        </div>
+    </a>
+</div>
+        <div class="hero-inner">
+            <div class="title-box">
+                <h1>INTRODUCING<span>2GIS RECOMMEND</span></h1>
+                <p>Умная система рекомендаций заведений по отзывам на основе аспектно-ориентированного анализа тональности.</p>
+            </div>
+
+            <form method="GET" action="/" class="search-form" id="searchForm">
+                <input
+                    type="text"
+                    name="q"
+                    id="searchInput"
+                    class="search-input"
+                    placeholder="Например: хочу с детьми, вкусный кофе и бургеры..."
+                    value="{{ query }}"
+                    autofocus
+                >
+                <button type="submit" class="search-btn">Найти</button>
+            </form>
+
+            <div class="hints">
+                <span class="hints-label">Аспекты и блюда:</span>
+                {% for kw in sample_tags %}
+                    <span class="chip" onclick="addWord('{{ kw }}')">+ {{ kw }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        {% if query %}
+            <div class="parsed-bar">
+                <div class="tag-group">
+                    <strong>Аспекты К1:</strong>
+                    {% if aspects %}
+                        {% for a in aspects %}<span class="tag">{{ a }}</span>{% endfor %}
+                    {% else %}
+                        <span style="opacity:0.6">не найдены</span>
+                    {% endif %}
+                </div>
+                <div class="tag-group">
+                    <strong>Блюда и темы:</strong>
+                    {% if dishes %}
+                        {% for d in dishes %}<span class="tag dish">{{ d }}</span>{% endfor %}
+                    {% else %}
+                        <span style="opacity:0.6">не найдены</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if not aspects and not dishes %}
+                <div class="empty-box">
+                    <h3>Не нашёл в запросе знакомых тем</h3>
+                    <p>Попробуйте использовать слова: кофе, десерты, обслуживание, цены, уютно, бургер, пицца, плов, шашлык, с детьми.</p>
+                </div>
+            {% elif not results %}
+                <div class="empty-box">
+                    <h3>Подходящих заведений не найдено</h3>
+                    <p>По выбранным критериям пока нет положительных упоминаний в базе отзывов.</p>
+                </div>
+            {% else %}
+                <div class="cards">
+                    {% for r in results %}
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="place-title">
+                                    <span class="rank-num">#{{ loop.index }}</span>{{ r.place }}
+                                </div>
+                                <div class="score-pill">Подходит на {{ (r.score * 100)|round|int }}%</div>
+                            </div>
+                            {% if r.rubrics or r.address %}
+                                <div class="meta">
+                                    {{ r.rubrics }}{% if r.rubrics and r.address %} &bull; {% endif %}{{ r.address }}
+                                </div>
+                            {% endif %}
+                            <ul class="notes">
+                                {% for n in r.notes %}
+                                    <li class="note-item {% if 'данных нет' in n %}empty{% endif %}">
+                                        {{ n }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-box">
+                <h3>Куда хотите пойти?</h3>
+                <p>Введите запрос в свободной форме выше или нажмите на интересующие теги, чтобы получить ТОП заведений.</p>
+            </div>
+        {% endif %}
+    </main>
+
+    <footer>
+        2GIS Aspect Recommender &bull;
+    </footer>
+
+    <script>
+        function addWord(word) {
+            const input = document.getElementById('searchInput');
+            const current = input.value.trim();
+            if (!current.toLowerCase().includes(word.toLowerCase())) {
+                input.value = current ? current + ', ' + word : word;
+            }
+            input.focus();
+        }
+    </script>
+</body>
+</html>
